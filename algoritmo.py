@@ -112,7 +112,7 @@ while(precios[-1] > 0):
                 porcentajeGanancia = c.PorcentajeDeGananciaActual(precios[-1])
                 if(porcentajeGanancia > constantes.PORCENTAJE_PARA_CERRAR_VENTA):
                     c.CerrarCompra(contadorDeTicks, precios[-1])
-                elif (c.CalcularTiempoDeVida(contadorDeTicks) > constantes.TIEMPO_DE_VIDA_MAXIMO and porcentajeGanancia < -constantes.PORCENTAJE_PARA_CERRAR_COMPRA_CON_PERDIDA):
+                elif (c.CalcularTiempoDeVida(contadorDeTicks) > constantes.TIEMPO_DE_VIDA_MAXIMO and porcentajeGanancia < constantes.PORCENTAJE_PARA_CERRAR_COMPRA_CON_PERDIDA):
                     c.CerrarCompra(contadorDeTicks, precios[-1])
                    
     if (angulo < constantes.ANGULO_CORTE and angulo > -constantes.ANGULO_CORTE and r[0] > constantes.RSI_MAX):############ Compra en mercado Lateral
@@ -125,18 +125,22 @@ while(precios[-1] > 0):
                 porcentajeGanancia = c.PorcentajeDeGananciaActual(precios[-1])
                 if(porcentajeGanancia > constantes.PORCENTAJE_PARA_CERRAR_VENTA):
                     c.CerrarCompra(contadorDeTicks, precios[-1])
-                elif (c.CalcularTiempoDeVida(contadorDeTicks) > constantes.TIEMPO_DE_VIDA_MAXIMO and porcentajeGanancia < -constantes.PORCENTAJE_PARA_CERRAR_COMPRA_CON_PERDIDA):
+                elif (c.CalcularTiempoDeVida(contadorDeTicks) > constantes.TIEMPO_DE_VIDA_MAXIMO and porcentajeGanancia < constantes.PORCENTAJE_PARA_CERRAR_COMPRA_CON_PERDIDA):
                     c.CerrarCompra(contadorDeTicks, precios[-1])
 
     contadorDeTicks += 1
 
-    precios.pop(0)                                          #Sacamos el primer valor de la lista para luego agregar otro valor al final
-    precios.append(LeerSiguienteDatoDesdeArchivo(archivo))
+    precios.pop(0)          #Sacamos el primer valor de la lista para luego agregar otro valor al final
+    siguienteDato = LeerSiguienteDatoDesdeArchivo(archivo)
+    if  siguienteDato < 0:
+        break
+    else:                                         
+        precios.append(siguienteDato)
     repeticiones += 1
-    r = rsi.RSI(precios, r[1], (r[2]))                       #Calculamos el RSI, la funcion devuelve una lista: [valor del rsi, media Ganancia, media Perdida]
+    r = rsi.RSI(precios, r[1], r[2])   #Calculamos el RSI, la funcion devuelve una lista: [valor del rsi, media Ganancia, media Perdida]
     #time.sleep(1)
 
 
 
-print("Porcentaje de Ganancia Total: " + '%.2f'%float(CalcularPorcentaje(billetera.capitalInicial, billetera.capitalDisponible + (billetera.capitalMonSecundaria * precios[-2]))))
+print("Porcentaje de Ganancia Total: " + '%.2f'%float(CalcularPorcentaje(billetera.capitalInicial, billetera.capitalDisponible + (billetera.capitalMonSecundaria * precios[-1]))) + " %")
 billetera.mostrarBalance()
