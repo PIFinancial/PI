@@ -6,6 +6,9 @@ import urllib.request
 import time
 import math
 import sys
+import pandas as pd
+import numpy as np
+from matplotlib import pyplot as plt
 
 def LeerSiguienteDato():
     url = "https://api.bitfinex.com/v1/pubticker/btcusd"
@@ -93,6 +96,9 @@ class EstadoDeCuenta:
 
 
 billetera = EstadoDeCuenta(5000)
+arregloEjeX_capitalDisponible = []
+arregloEjeY_capitalDisponible = []
+arregloEjeY_capitalMonSecundaria = []
 
 precios = CargarPrimerosDatos(archivo)           #cargamos 15 valores en la lista
 r = rsi.RSI_inicial(precios, 0, 0)
@@ -130,9 +136,13 @@ while(precios[-1] > 0):
 
     contadorDeTicks += 1
 
+    arregloEjeX_capitalDisponible.append(contadorDeTicks)
+    arregloEjeY_capitalDisponible.append(billetera.capitalDisponible + (billetera.capitalMonSecundaria * precios[-1]))
+    
+
     precios.pop(0)          #Sacamos el primer valor de la lista para luego agregar otro valor al final
     siguienteDato = LeerSiguienteDatoDesdeArchivo(archivo)
-    if  siguienteDato < 0:
+    if  siguienteDato < 0:  # condicion de salida del bucle while al finalizar el archivo
         break
     else:                                         
         precios.append(siguienteDato)
@@ -140,6 +150,11 @@ while(precios[-1] > 0):
     r = rsi.RSI(precios, r[1], r[2])   #Calculamos el RSI, la funcion devuelve una lista: [valor del rsi, media Ganancia, media Perdida]
     #time.sleep(1)
 
+
+plt.plot(arregloEjeX_capitalDisponible, arregloEjeY_capitalDisponible)
+plt.xlabel("Tiks (15 min)")
+plt.ylabel("Dolares")
+plt.show()
 
 
 print("Porcentaje de Ganancia Total: " + '%.2f'%float(CalcularPorcentaje(billetera.capitalInicial, billetera.capitalDisponible + (billetera.capitalMonSecundaria * precios[-1]))) + " %")
