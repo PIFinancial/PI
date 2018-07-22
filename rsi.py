@@ -1,7 +1,5 @@
 import constantes
 
-
-
 def RSI_inicial(lista, mediaGanancia, mediaPerdida):
 
     for i in range(constantes.TICKS - 1):
@@ -21,19 +19,19 @@ def RSI_inicial(lista, mediaGanancia, mediaPerdida):
 
 def RSI(lista, mediaGanancia, mediaPerdida):
 
-    if ((lista[constantes.TICKS - 1] - lista[constantes.TICKS - 2]) > 0):
-        mediaGanancia = ((mediaGanancia * (constantes.TICKS - 2)) + (lista[constantes.TICKS - 1] - lista[constantes.TICKS - 2])) / (constantes.TICKS - 1)
+    if ((lista[-1] - lista[-2]) > 0):
+        mediaGanancia = ((mediaGanancia * (constantes.TICKS - 2)) + (lista[-1] - lista[-2])) / (constantes.TICKS - 1)
         mediaPerdida = ((mediaPerdida * (constantes.TICKS - 2)) + (0)) / (constantes.TICKS - 1)
     
-    if ((lista[constantes.TICKS - 1] - lista[constantes.TICKS - 2]) < 0):
+    if ((lista[-1] - lista[-2]) < 0):
         mediaGanancia = ((mediaGanancia * (constantes.TICKS - 2)) + (0)) / (constantes.TICKS - 1)
-        mediaPerdida = ((mediaPerdida * (constantes.TICKS - 2)) + (-(lista[constantes.TICKS - 1] - lista[constantes.TICKS - 2]))) / (constantes.TICKS - 1)
+        mediaPerdida = ((mediaPerdida * (constantes.TICKS - 2)) + (-(lista[-1] - lista[-2]))) / (constantes.TICKS - 1)
 
-    if ((lista[constantes.TICKS - 1] - lista[constantes.TICKS - 2]) == 0):
+    if ((lista[-1] - lista[-2]) == 0):
         mediaGanancia = ((mediaGanancia * (constantes.TICKS - 2)) + (0)) / (constantes.TICKS - 1)
         mediaPerdida = ((mediaPerdida * (constantes.TICKS - 2)) + (0)) / (constantes.TICKS - 1)
     
     rsi = (100 - (100 * (1 / (1 + (mediaGanancia / mediaPerdida)))))
-    datos_retornados = [rsi , mediaGanancia, mediaPerdida]
+    datos_retornados = [round(rsi,4) , round(mediaGanancia,4), round(mediaPerdida,4)]
 
     return datos_retornados
