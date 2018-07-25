@@ -40,6 +40,7 @@ def CalcularPorcentaje(montoInicial, montoFinal):
 
 archivo = Abrir_archivo_lista_precios()
 archivoRegistroSalida = open('Registro salida','w')
+archivoParaGraficar = open('15_247_3_54_27.txt','w')
 
 compras = []  #Declaramos arreglo de compras
 ventas = []   #Declaramos arreglo de ventas
@@ -95,13 +96,18 @@ class EstadoDeCuenta:
         
 
 
-billetera = EstadoDeCuenta(5000)
+billetera = EstadoDeCuenta(constantes.DINERO_INICIAL)
 arregloEjeX_capitalDisponible = []
 arregloEjeY_capitalDisponible = []
 arregloEjeY_capitalMonSecundaria = []
 
 precios = CargarPrimerosDatos(archivo)           #cargamos 15 valores en la lista
 r = rsi.RSI_inicial(precios, 0, 0)
+precios.pop(0)          #Sacamos el primer valor de la lista para luego agregar otro valor al final
+siguienteDato = LeerSiguienteDatoDesdeArchivo(archivo)
+precios.append(siguienteDato)
+r = rsi.RSI(precios, r[1], r[2])
+
 
 
 while(precios[-1] > 0):
@@ -109,7 +115,7 @@ while(precios[-1] > 0):
     angulo = regrecion_lineal.Reg_lin(precios)      #Calculamos el angulo de la regresion lineal
 
     if (angulo > constantes.ANGULO_CORTE and r[0] > constantes.RSI_MAX):################################# Compra en mercado Alcista
-        if(billetera.capitalDisponible > constantes.MONEDA_SECUNDARIA_POR_OPERACION * precios[-1]):     
+        if(billetera.capitalDisponible >= constantes.MONEDA_SECUNDARIA_POR_OPERACION * precios[-1]):     
             compras.append(Compra(precios[-1], angulo, contadorDeTicks, billetera))          
     
     if(angulo < -constantes.ANGULO_CORTE and r[0] < constantes.RSI_MIN):################################## Venta en mercado Bajista
@@ -118,11 +124,11 @@ while(precios[-1] > 0):
                 porcentajeGanancia = c.PorcentajeDeGananciaActual(precios[-1])
                 if(porcentajeGanancia > constantes.PORCENTAJE_PARA_CERRAR_VENTA):
                     c.CerrarCompra(contadorDeTicks, precios[-1])
-                elif (c.CalcularTiempoDeVida(contadorDeTicks) > constantes.TIEMPO_DE_VIDA_MAXIMO and porcentajeGanancia < constantes.PORCENTAJE_PARA_CERRAR_COMPRA_CON_PERDIDA):
+                elif (c.CalcularTiempoDeVida(contadorDeTicks) > constantes.TIEMPO_DE_VIDA_MAXIMO or porcentajeGanancia < -constantes.PORCENTAJE_PARA_CERRAR_COMPRA_CON_PERDIDA):
                     c.CerrarCompra(contadorDeTicks, precios[-1])
                    
     if (angulo < constantes.ANGULO_CORTE and angulo > -constantes.ANGULO_CORTE and r[0] > constantes.RSI_MAX):############ Compra en mercado Lateral
-        if(billetera.capitalDisponible > constantes.MONEDA_SECUNDARIA_POR_OPERACION * precios[-1]):     
+        if(billetera.capitalDisponible >= constantes.MONEDA_SECUNDARIA_POR_OPERACION * precios[-1]):     
             compras.append(Compra(precios[-1], angulo, contadorDeTicks, billetera))
 
     if(angulo < constantes.ANGULO_CORTE and angulo > -constantes.ANGULO_CORTE and r[0] < constantes.RSI_MIN):############## Venta en mercado Lateral
@@ -131,13 +137,14 @@ while(precios[-1] > 0):
                 porcentajeGanancia = c.PorcentajeDeGananciaActual(precios[-1])
                 if(porcentajeGanancia > constantes.PORCENTAJE_PARA_CERRAR_VENTA):
                     c.CerrarCompra(contadorDeTicks, precios[-1])
-                elif (c.CalcularTiempoDeVida(contadorDeTicks) > constantes.TIEMPO_DE_VIDA_MAXIMO and porcentajeGanancia < constantes.PORCENTAJE_PARA_CERRAR_COMPRA_CON_PERDIDA):
+                elif (c.CalcularTiempoDeVida(contadorDeTicks) > constantes.TIEMPO_DE_VIDA_MAXIMO or porcentajeGanancia < -constantes.PORCENTAJE_PARA_CERRAR_COMPRA_CON_PERDIDA):
                     c.CerrarCompra(contadorDeTicks, precios[-1])
 
     contadorDeTicks += 1
 
     arregloEjeX_capitalDisponible.append(contadorDeTicks)
     arregloEjeY_capitalDisponible.append(billetera.capitalDisponible + (billetera.capitalMonSecundaria * precios[-1]))
+    archivoParaGraficar.write(str(arregloEjeY_capitalDisponible[-1]) + "\n")
     
 
     precios.pop(0)          #Sacamos el primer valor de la lista para luego agregar otro valor al final
@@ -149,7 +156,7 @@ while(precios[-1] > 0):
     repeticiones += 1
     r = rsi.RSI(precios, r[1], r[2])   #Calculamos el RSI, la funcion devuelve una lista: [valor del rsi, media Ganancia, media Perdida]
     #time.sleep(1)
-
+    
 
 plt.plot(arregloEjeX_capitalDisponible, arregloEjeY_capitalDisponible)
 plt.xlabel("Tiks (15 min)")
@@ -159,3 +166,4 @@ plt.show()
 
 print("Porcentaje de Ganancia Total: " + '%.2f'%float(CalcularPorcentaje(billetera.capitalInicial, billetera.capitalDisponible + (billetera.capitalMonSecundaria * precios[-1]))) + " %")
 billetera.mostrarBalance()
+
