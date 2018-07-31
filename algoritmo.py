@@ -38,6 +38,16 @@ def CargarPrimerosDatos(archivo):
 def CalcularPorcentaje(montoInicial, montoFinal):
     return (((montoFinal * 100) / montoInicial) - 100)
 
+
+def EliminarComprasCerradas():
+        i = 0
+        while (i < len(compras)):
+            if(compras[i].eliminar == True):
+                compras.pop(i)
+                i = -1
+            i += 1
+
+
 archivo = Abrir_archivo_lista_precios()
 archivoRegistroSalida = open('Registro salida','w')
 archivoParaGraficar = open('15_489_1_61_28.txt','w')
@@ -65,6 +75,7 @@ class Compra:
         self.tickCompra = tickCompra
         self.tickVenta = 0
         self.tiempo_de_vida = 0
+        self.eliminar = False
         Compra.billetera.capitalDisponible -= round(constantes.MONEDA_SECUNDARIA_POR_OPERACION * precios[-1] , 4)
         Compra.billetera.capitalMonSecundaria += round(constantes.MONEDA_SECUNDARIA_POR_OPERACION , 4)
         Compra.cantComprasTotales += 1
@@ -79,10 +90,8 @@ class Compra:
         Compra.billetera.capitalDisponible += round(precios[-1] * constantes.MONEDA_SECUNDARIA_POR_OPERACION , 4)
         Compra.billetera.capitalMonSecundaria -= round(constantes.MONEDA_SECUNDARIA_POR_OPERACION , 4)
         ventas.append(Venta(precioVenta, self))
-        compras.pop(compras.index(self))
         del(self)
-        
-
+    
 
 
 class Venta:
@@ -120,20 +129,14 @@ while(precios[-1] > 0):
     
     if(angulo < -constantes.ANGULO_CORTE and r[0] < constantes.RSI_MIN):################################## Venta en mercado Bajista
         if(compras != []):
-            bandera = 0
-            while bandera == 0:
                 for c in compras:
                     porcentajeGanancia = c.PorcentajeDeGananciaActual(precios[-1])
                     if(porcentajeGanancia > constantes.PORCENTAJE_PARA_CERRAR_VENTA):
                         c.CerrarCompra(contadorDeTicks, precios[-1])
-                        bandera = 1
+                        c.eliminar = True
                     elif (c.CalcularTiempoDeVida(contadorDeTicks) > constantes.TIEMPO_DE_VIDA_MAXIMO and porcentajeGanancia < -constantes.PORCENTAJE_PARA_CERRAR_COMPRA_CON_PERDIDA):
                         c.CerrarCompra(contadorDeTicks, precios[-1])
-                        bandera = 1
-                if bandera == 1:
-                    bandera = 0
-                else:
-                    break
+                        c.eliminar = True
                    
     if (angulo < constantes.ANGULO_CORTE and angulo > -constantes.ANGULO_CORTE and r[0] > constantes.RSI_MAX):############ Compra en mercado Lateral
         if(Compra.billetera.capitalDisponible >= constantes.MONEDA_SECUNDARIA_POR_OPERACION * precios[-1]):     
@@ -141,21 +144,16 @@ while(precios[-1] > 0):
 
     if (angulo < constantes.ANGULO_CORTE and angulo > -constantes.ANGULO_CORTE and r[0] < constantes.RSI_MIN):############## Venta en mercado Lateral
         if(compras != []):
-            bandera = 0
-            while bandera == 0:
                 for c in compras:
                     porcentajeGanancia = c.PorcentajeDeGananciaActual(precios[-1])
                     if(porcentajeGanancia > constantes.PORCENTAJE_PARA_CERRAR_VENTA):
                         c.CerrarCompra(contadorDeTicks, precios[-1])
-                        bandera = 1
+                        c.eliminar = True
                     elif (c.CalcularTiempoDeVida(contadorDeTicks) > constantes.TIEMPO_DE_VIDA_MAXIMO and porcentajeGanancia < -constantes.PORCENTAJE_PARA_CERRAR_COMPRA_CON_PERDIDA):
                         c.CerrarCompra(contadorDeTicks, precios[-1])
-                        bandera = 1
-                if bandera == 1:
-                    bandera = 0
-                else:
-                    break
+                        c.eliminar = True
 
+    EliminarComprasCerradas()       #Eliminamos compras cerradas de la lista de compras
     contadorDeTicks += 1
 
     arregloEjeX_capitalDisponible.append(contadorDeTicks)
